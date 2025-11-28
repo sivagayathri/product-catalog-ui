@@ -47,31 +47,31 @@ const ProductListing = () => {
   return (
     <div className="product-page">
       <div className="filters-row">
+        <span>Search by Product Name</span>
         <input
           className="search-input"
           type="text"
-          placeholder="Search by Product Name"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-
+          <span>Price Range</span>
         <select
           className="filter-select"
           value={priceRange}
           onChange={(e) => setPriceRange(e.target.value)}
         >
-          <option value="">Price Range</option>
+          <option value=""></option>
           <option value="0-30">$0 - $30</option>
           <option value="31-60">$31 - $60</option>
           <option value="61-100">$61 - $100</option>
         </select>
-
+           <span>Category</span>
         <select
           className="filter-select"
           value={category}
           onChange={(e) => setCategory(e.target.value)}
         >
-          <option value="">Category</option>
+          <option value=""></option>
           <option value="MOISTURIZERS">MOISTURIZERS</option>
           <option value="TREATMENTS">TREATMENTS</option>
           <option value="EYE CARE">EYE CARE</option>
