@@ -1,22 +1,35 @@
-import { useEffect, useState } from "react";
-import { getProducts } from "../services/api";
-import ProductCard from "../components/ProductCard";
-import "./productListing.css";
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+
+import { getProducts, getCategories } from '../services/api';
+import Filters from '../components/Filters/Filters';
+import ProductGrid from '../components/ProductGrid/ProductGrid';
+
+import './productListing.css';
 
 const ProductListing = () => {
-  const [products, setProducts] = useState([]);
-  const [filtered, setFiltered] = useState([]);
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [search, setSearch] = useState("");
-  const [priceRange, setPriceRange] = useState("");
-  const [category, setCategory] = useState("");
+  const [search, setSearch] = useState(searchParams.get('search') || '');
+  const [priceRange, setPriceRange] = useState(searchParams.get('price') || '');
+  const [selectedCategories, setSelectedCategories] = useState(
+    searchParams.get('category') ? searchParams.get('category').split(',') : [],
+  );
+
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [filtered, setFiltered] = useState([]);
 
   useEffect(() => {
     const loadData = async () => {
       const items = await getProducts();
+      const cats = await getCategories();
+
       setProducts(items);
       setFiltered(items);
+      setCategories(cats);
     };
+
     loadData();
   }, []);
 
@@ -25,66 +38,49 @@ const ProductListing = () => {
 
     if (search.trim()) {
       result = result.filter((p) =>
-        p.title.toLowerCase().includes(search.toLowerCase())
+        p.title.toLowerCase().includes(search.toLowerCase()),
       );
     }
 
-    if (category) {
-      result = result.filter((p) => p.category === category);
+    if (selectedCategories.length > 0) {
+      result = result.filter((p) => selectedCategories.includes(p.category));
     }
 
     if (priceRange) {
-      const [min, max] = priceRange.split("-").map(Number);
+      const [min, max] = priceRange.split('-').map(Number);
       result = result.filter((p) => {
-        const priceValue = Number(p.price.replace("$", ""));
-        return priceValue >= min && priceValue <= max;
+        const priceVal = Number(p.price.replace('$', ''));
+        return priceVal >= min && priceVal <= max;
       });
     }
 
     setFiltered(result);
-  }, [search, priceRange, category, products]);
+  }, [search, priceRange, selectedCategories, products]);
+
+  useEffect(() => {
+    const params = {};
+
+    if (search) params.search = search;
+    if (priceRange) params.price = priceRange;
+    if (selectedCategories.length > 0)
+      params.category = selectedCategories.join(',');
+
+    setSearchParams(params);
+  }, [search, priceRange, selectedCategories]);
 
   return (
     <div className="product-page">
-      <div className="filters-row">
-        <span>Search by Product Name</span>
-        <input
-          className="search-input"
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-          <span>Price Range</span>
-        <select
-          className="filter-select"
-          value={priceRange}
-          onChange={(e) => setPriceRange(e.target.value)}
-        >
-          <option value=""></option>
-          <option value="0-30">$0 - $30</option>
-          <option value="31-60">$31 - $60</option>
-          <option value="61-100">$61 - $100</option>
-        </select>
-           <span>Category</span>
-        <select
-          className="filter-select"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-        >
-          <option value=""></option>
-          <option value="MOISTURIZERS">MOISTURIZERS</option>
-          <option value="TREATMENTS">TREATMENTS</option>
-          <option value="EYE CARE">EYE CARE</option>
-          <option value="SUN CARE">SUN CARE</option>
-        </select>
-      </div>
+      <Filters
+        search={search}
+        setSearch={setSearch}
+        priceRange={priceRange}
+        setPriceRange={setPriceRange}
+        categories={categories}
+        selectedCategories={selectedCategories}
+        setSelectedCategories={setSelectedCategories}
+      />
 
-
-      <div className="products-grid">
-        {filtered.map((p, i) => (
-          <ProductCard key={i} product={p} />
-        ))}
-      </div>
+      <ProductGrid products={filtered} />
     </div>
   );
 };
