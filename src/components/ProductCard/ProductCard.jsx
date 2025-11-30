@@ -9,13 +9,14 @@ const ProductCard = ({ product }) => {
 
       <div className="product-category">{product.category}</div>
 
-      <div>
+      <div className="product-price-box">
+        <span className="product-price">{product.price}</span>
+
         {product.discountedPrice && (
-          <span className="product-discount">{product.price}</span>
+          <span className="product-discount-tag">
+            Discount: {product.discountedPrice}
+          </span>
         )}
-        <span className="product-price">
-          {product.discountedPrice || product.price}
-        </span>
       </div>
     </div>
   );

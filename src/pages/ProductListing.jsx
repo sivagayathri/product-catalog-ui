@@ -70,6 +70,7 @@ const ProductListing = () => {
 
   return (
     <div className="product-page">
+      <h2>Product Catalog</h2>
       <Filters
         search={search}
         setSearch={setSearch}
