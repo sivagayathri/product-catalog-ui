@@ -1,9 +1,12 @@
-import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useState } from 'react';
 
-import { getProducts, getCategories } from '../services/api';
 import Filters from '../components/Filters/Filters';
 import ProductGrid from '../components/ProductGrid/ProductGrid';
+
+import { useProducts } from '../hooks/useProducts';
+import { useFilters } from '../hooks/useFilters';
+import { useURLSync } from '../hooks/useURLSync';
 
 import './productListing.css';
 
@@ -16,61 +19,18 @@ const ProductListing = () => {
     searchParams.get('category') ? searchParams.get('category').split(',') : [],
   );
 
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [filtered, setFiltered] = useState([]);
+  const { products, categories, loading } = useProducts();
 
-  useEffect(() => {
-    const loadData = async () => {
-      const items = await getProducts();
-      const cats = await getCategories();
+  const filtered = useFilters(products, search, priceRange, selectedCategories);
 
-      setProducts(items);
-      setFiltered(items);
-      setCategories(cats);
-    };
+  useURLSync(search, priceRange, selectedCategories, setSearchParams);
 
-    loadData();
-  }, []);
-
-  useEffect(() => {
-    let result = [...products];
-
-    if (search.trim()) {
-      result = result.filter((p) =>
-        p.title.toLowerCase().includes(search.toLowerCase()),
-      );
-    }
-
-    if (selectedCategories.length > 0) {
-      result = result.filter((p) => selectedCategories.includes(p.category));
-    }
-
-    if (priceRange) {
-      const [min, max] = priceRange.split('-').map(Number);
-      result = result.filter((p) => {
-        const priceVal = Number(p.price.replace('$', ''));
-        return priceVal >= min && priceVal <= max;
-      });
-    }
-
-    setFiltered(result);
-  }, [search, priceRange, selectedCategories, products]);
-
-  useEffect(() => {
-    const params = {};
-
-    if (search) params.search = search;
-    if (priceRange) params.price = priceRange;
-    if (selectedCategories.length > 0)
-      params.category = selectedCategories.join(',');
-
-    setSearchParams(params);
-  }, [search, priceRange, selectedCategories]);
+  if (loading) return <div className="loading">Loading...</div>;
 
   return (
     <div className="product-page">
-      <h2>Product Catalog</h2>
+      <h2 className="page-title">Product Catalog</h2>
+
       <Filters
         search={search}
         setSearch={setSearch}
@@ -81,7 +41,11 @@ const ProductListing = () => {
         setSelectedCategories={setSelectedCategories}
       />
 
-      <ProductGrid products={filtered} />
+      {filtered.length === 0 ? (
+        <p className="no-items">Oops! No items available.</p>
+      ) : (
+        <ProductGrid products={filtered} />
+      )}
     </div>
   );
 };
